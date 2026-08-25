@@ -1,0 +1,75 @@
+name: Render statutes and release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+    paths:
+      - statutes.md
+
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: Create a new release?
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Extract readable date from statutes
+        id: extract_date
+        run: |
+          READABLE_DATE=$(tail -n 1 statutes.md | grep -oP '\d{1,2}\.\d{1,2}\.\d{4}')
+          if [[ -z "$READABLE_DATE" ]]; then
+            echo "::error::Date not found in last line of statutes.md"
+            exit 1
+          fi
+          echo "readable_date=$READABLE_DATE" >> $GITHUB_OUTPUT
+          echo "Readable date: $READABLE_DATE"
+
+      - name: Generate unique tag from render time
+        id: render_tag
+        run: |
+          RENDER_TS=$(date +'%Y%m%d-%H%M%S')
+          echo "tag=$RENDER_TS" >> $GITHUB_OUTPUT
+          echo "Render tag: $RENDER_TS"
+
+      - name: Install pandoc and LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-latex-extra
+
+      - name: Render markdown to PDF
+        run: |
+          OUTPUT_FILE="Hoppy Dice Tactics Statuten ${{ steps.extract_date.outputs.readable_date }}.pdf"
+          pandoc statutes.md -o "$OUTPUT_FILE" --pdf-engine=xelatex \
+            -V geometry:margin=2cm \
+            -V header-includes="\usepackage{graphicx}\usepackage{fancyhdr}\pagestyle{fancy}\fancyhead[R]{\includegraphics[height=1cm]{assets/logo.png}}\renewcommand{\headrulewidth}{0pt}"
+
+      - name: Create GitHub Release
+        if: ${{ github.event.inputs.create_release == 'true' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.render_tag.outputs.tag }}
+          name: Statuten ${{ steps.extract_date.outputs.readable_date }}
+          body: Hoppy Dice Tactics Statuten vom ${{ steps.extract_date.outputs.readable_date }}
+          files: Hoppy Dice Tactics Statuten ${{ steps.extract_date.outputs.readable_date }}.pdf
+
+      - name: Upload artifact (always)
+        uses: actions/upload-artifact@v7
+        with:
+          name: Statuten ${{ steps.extract_date.outputs.readable_date }}
+          path: Hoppy Dice Tactics Statuten ${{ steps.extract_date.outputs.readable_date }}.pdf
+          retention-days: 7
