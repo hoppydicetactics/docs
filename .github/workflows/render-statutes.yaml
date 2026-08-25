@@ -53,13 +53,6 @@ jobs:
 
       - name: Render markdown to PDF
         run: |
-          OUTPUT_FILE="Hoppy Dice Tactics Statuten ${{ steps.extract_date.outputs.readable_date }}.pdf"
-          pandoc statutes.md -o "$OUTPUT_FILE" --pdf-engine=xelatex \
-            -V geometry:margin=2cm \
-            -V header-includes="\usepackage{graphicx}\usepackage{fancyhdr}\pagestyle{fancy}\fancyhead[R]{\includegraphics[height=1cm]{assets/logo.png}}\renewcommand{\headrulewidth}{0pt}"
-
-      - name: Render markdown to PDF
-        run: |
           HEADER_TEXT="Statuten Hoppy Dice Tactics"
           OUTPUT_FILE="Hoppy Dice Tactics Statuten"
           RENDER_DATE=$(date +'%d.%m.%Y %H:%M')
