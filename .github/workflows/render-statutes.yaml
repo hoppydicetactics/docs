@@ -10,41 +10,37 @@ on:
       - statutes.md
 
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: Create a new release?
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: write
 
+env:
+  HEADER_TEXT: Statuten Hoppy Dice Tactics
+  OUTPUT_FILE: Hoppy Dice Tactics Statuten
+
 jobs:
-  build-and-release:
+  render-and-release:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Extract readable date from statutes
-        id: extract_date
+      - name: Extract date from statutes
+        id: statutes_date
         run: |
-          READABLE_DATE=$(tail -n 1 statutes.md | grep -oP '\d{1,2}\.\d{1,2}\.\d{4}')
-          if [[ -z "$READABLE_DATE" ]]; then
-            echo "::error::Date not found in last line of statutes.md"
+          EXTRACTED_DATE=$(tail -n 1 statutes.md | grep -oP '\d{1,2}\.\d{1,2}\.\d{4}')
+          if [[ -z "$EXTRACTED_DATE" ]]; then
+            echo "::error::No date found in last line of statutes.md"
             exit 1
           fi
-          echo "readable_date=$READABLE_DATE" >> $GITHUB_OUTPUT
-          echo "Readable date: $READABLE_DATE"
+          echo "date=$EXTRACTED_DATE" >> $GITHUB_OUTPUT
 
-      - name: Generate unique tag from render time
-        id: render_tag
+      - name: Generate timestamp from render time
+        id: render_date
         run: |
           RENDER_TS=$(date +'%Y%m%d-%H%M%S')
-          echo "tag=$RENDER_TS" >> $GITHUB_OUTPUT
-          echo "Render tag: $RENDER_TS"
+          echo "time=$RENDER_TS" >> $GITHUB_OUTPUT
 
       - name: Install pandoc and LaTeX
         run: |
@@ -53,33 +49,34 @@ jobs:
 
       - name: Render markdown to PDF
         run: |
-          HEADER_TEXT="Statuten Hoppy Dice Tactics"
-          OUTPUT_FILE="Hoppy Dice Tactics Statuten"
-          RENDER_DATE=$(date +'%d.%m.%Y %H:%M')
-
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            HEADER_TEXT="${HEADER_TEXT} - Draft ${RENDER_DATE}"
-            OUTPUT_FILE="${OUTPUT_FILE} Draft ${RENDER_DATE}.pdf"
+            HEADER_TEXT="${{ env.HEADER_TEXT }} - Entwurf ${{ steps.render_date.outputs.time }}"
+            OUTPUT_FILE="${{ env.OUTPUT_FILE }} Entwurf ${{ steps.render_date.outputs.time }}.pdf"
           else
-            OUTPUT_FILE="${OUTPUT_FILE} ${{ steps.extract_date.outputs.readable_date }}.pdf"
+            HEADER_TEXT="${{ env.HEADER_TEXT }} - ${{ steps.render_date.outputs.time }}"
+            OUTPUT_FILE="${{ env.OUTPUT_FILE }} ${{ steps.statutes_date.outputs.date }}.pdf"
           fi
-          
-          pandoc statutes.md -o "$OUTPUT_FILE" --pdf-engine=xelatex \
-            -V geometry:margin=2cm \
-            -V header-includes="\usepackage{graphicx}\usepackage{fancyhdr}\pagestyle{fancy}\fancyhead[L]{$HEADER_TEXT}\fancyhead[R]{\includegraphics[height=1cm]{assets/logo.png}}\renewcommand{\headrulewidth}{0pt}"
+
+          sed -i "s/__HEADER_TEXT__/$HEADER_TEXT/g" templates/statutes.yaml
+
+          pandoc templates/statutes.yaml statutes.md \
+            --output "$OUTPUT_FILE" \
+            --pdf-engine xelatex
 
       - name: Create GitHub Release
-        if: ${{ github.event.inputs.create_release == 'true' }}
+        if: github.event_name == 'pull_request'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ steps.render_tag.outputs.tag }}
-          name: Statuten ${{ steps.extract_date.outputs.readable_date }}
-          body: Hoppy Dice Tactics Statuten vom ${{ steps.extract_date.outputs.readable_date }}
-          files: Hoppy Dice Tactics Statuten ${{ steps.extract_date.outputs.readable_date }}.pdf
+          body: ${{ env.OUTPUT_FILE }} vom ${{ steps.statutes_date.outputs.date }}
+          files: ${{ env.OUTPUT_FILE }} ${{ steps.statutes_date.outputs.date }}.pdf
+          name: Statuten ${{ steps.statutes_date.outputs.date }}
+          tag_name: ${{ steps.render_date.outputs.time }}
 
-      - name: Upload artifact (always)
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v7
         with:
-          name: Statuten ${{ steps.extract_date.outputs.readable_date }}
-          path: Hoppy Dice Tactics Statuten ${{ steps.extract_date.outputs.readable_date }}.pdf
+          archive: false
+          name: ${{ env.OUTPUT_FILE }} Entwurf ${{ steps.render_date.outputs.time }}
+          path: ${{ env.OUTPUT_FILE }} Entwurf ${{ steps.render_date.outputs.time }}.pdf
           retention-days: 7

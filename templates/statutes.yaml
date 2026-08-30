@@ -1,0 +1,18 @@
+---
+geometry: margin=2cm,a4paper,bottom=3cm
+header-includes: |
+  \usepackage{graphicx}
+  \usepackage{fancyhdr}
+  \usepackage{lastpage}
+  \fancyhead[L]{__HEADER_TEXT__}
+  \fancyhead[R]{%
+    \raisebox{-0.4\height}{%
+      \includegraphics[height=1.3cm]{assets/logo.png}
+    }
+  }
+  \fancyfoot[C]{\thepage/\pageref{LastPage}}
+  \addtolength{\headsep}{0.6cm}
+  \addtolength{\footskip}{0.6cm}
+  \renewcommand{\headrulewidth}{0pt}
+  \pagestyle{fancy}
+---
