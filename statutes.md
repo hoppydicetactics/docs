@@ -63,7 +63,6 @@ Die Mitgliederversammlung hat die folgenden unentziehbaren Aufgaben und Kompeten
 
 - Genehmigung des Protokolls der letzten Mitgliederversammlung
 - Genehmigung des Jahresberichts des Vorstands
-- Entgegennahme des Revisionsberichts und Genehmigung der Jahresrechnung
 - Entlastung des Vorstandes
 - Wahl der Präsident\*in und der übrigen Vorstandsmitglieder
 - Festsetzung des Mitgliederbeitrages
