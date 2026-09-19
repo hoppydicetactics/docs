@@ -54,7 +54,7 @@ jobs:
             HEADER_TEXT="${{ env.HEADER_TEXT }} - Entwurf ${{ steps.render_date.outputs.time }}"
             OUTPUT_FILE="${{ env.OUTPUT_FILE }} Entwurf ${{ steps.render_date.outputs.time }}.pdf"
           else
-            HEADER_TEXT="${{ env.HEADER_TEXT }} - ${{ steps.render_date.outputs.time }}"
+            HEADER_TEXT="${{ env.HEADER_TEXT }} - ${{ steps.statutes_date.outputs.date }}"
             OUTPUT_FILE="${{ env.OUTPUT_FILE }} ${{ steps.statutes_date.outputs.date }}.pdf"
           fi
 
