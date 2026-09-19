@@ -1,5 +1,4 @@
 # Statuten Hoppy Dice Tactics
-
 ## 1. Name und Sitz
 
 Unter dem Namen "Hoppy Dice Tactics" besteht ein Verein im Sinne von Art. 60 ff. ZGB mit Sitz in Bern. Er ist politisch unabhängig und konfessionell neutral.
