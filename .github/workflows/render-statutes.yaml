@@ -8,6 +8,7 @@ on:
       - closed
     paths:
       - statutes.md
+      - .github/workflows/render-statutes.yaml
 
   workflow_dispatch:
 
